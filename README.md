@@ -15,5 +15,5 @@ After running maven command, benchmarks.jar will be made in `target/`
 Please set database properties in `src/main/resources/database.properties` before you run benchmark.
 
 ```shell
-java -Dapp.properties=/path/to/benchmark.properties -jar benchmarks.jar
+java -Dapp.properties=/path/to/database.properties -jar benchmarks.jar
 ```
