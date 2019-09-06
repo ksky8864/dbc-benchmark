@@ -10,8 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TestUtil {
-	private static final String INIT_FILE_PATH = "./benchmark.properties";
-
 	private static final Properties properties;
 
 	private static Logger log = LoggerFactory.getLogger(TestUtil.class);
@@ -21,11 +19,12 @@ public class TestUtil {
 
 	static {
 		properties = new Properties();
+		String propFilePath = "";
 		try {
-			final var propFilePath = System.getProperty("app.properties");
+			propFilePath = System.getProperty("app.properties");
 			properties.load(Files.newBufferedReader(Paths.get(propFilePath), StandardCharsets.UTF_8));
 		} catch (final IOException e) {
-			log.error("failed to load properties {}", INIT_FILE_PATH);
+			log.error("failed to load properties {}", propFilePath);
 			throw new RuntimeException(e);
 		}
 	}
