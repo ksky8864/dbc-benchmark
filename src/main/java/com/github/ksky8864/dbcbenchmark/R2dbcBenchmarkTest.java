@@ -10,7 +10,6 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 
 import com.github.ksky8864.dbcbenchmark.logic.R2dbcLogic;
@@ -25,7 +24,7 @@ public class R2dbcBenchmarkTest {
 
 	@State(Scope.Benchmark)
 	public static class Parameters {
-		@Param({ "50" })
+		@Param({ "10000" })
 		String count;
 	}
 
@@ -33,11 +32,6 @@ public class R2dbcBenchmarkTest {
 	public void setUp() {
 		this.benchmarkLogic = new R2dbcLogic();
 		this.benchmarkLogic.truncate();
-	}
-
-	@TearDown(Level.Iteration)
-	public void tearDown() {
-		this.benchmarkLogic.shutdown();
 	}
 
 	@Benchmark

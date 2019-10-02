@@ -1,8 +1,8 @@
 package com.github.ksky8864.dbcbenchmark.logic;
 
-//import static java.lang.System.*;
 import static com.github.ksky8864.dbcbenchmark.TestUtil.*;
 
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,29 +12,18 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-
 public class JdbcLogic {
-
-	private final HikariDataSource ds;
 
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final ExecutorService executors;
 
+	private final String url;
+
 	public JdbcLogic() {
-		final var config = new HikariConfig();
-		config.setDriverClassName("org.postgresql.Driver");
-		config.setUsername(getProperty("db.username"));
-		config.setPassword(getProperty("db.password"));
-		config.setJdbcUrl(String.format("jdbc:postgresql://%s:%s/%s", getProperty("db.host"),
-				getProperty("db.port", "5432"), getProperty("db.database")));
-		final int maxPoolSize = Integer.parseInt(getProperty("db.poolsize", "64"));
-		config.setMaximumPoolSize(maxPoolSize);
-		config.setAutoCommit(false);
-		this.ds = new HikariDataSource(config);
-		this.executors = Executors.newFixedThreadPool(maxPoolSize);
+		this.executors = Executors.newFixedThreadPool(Integer.parseInt(getProperty("db.poolsize", "64")));
+		this.url = String.format("jdbc:postgresql://%s:%s/%s", getProperty("db.host"),
+				getProperty("db.port", "5432"), getProperty("db.database"));
 	}
 
 	public Future<Integer> insert() {
@@ -43,7 +32,8 @@ public class JdbcLogic {
 
 	private int doInsert() {
 		int updCount = -1;
-		try (var conn = this.ds.getConnection()) {
+		try (var conn = DriverManager.getConnection(this.url, "rtfa", "rtfa")) {
+			conn.setAutoCommit(false);
 			try (var pstmt = conn.prepareStatement("insert into benchmark_test values (?)")) {
 				pstmt.setString(1, "TEST");
 				updCount = pstmt.executeUpdate();
@@ -61,8 +51,9 @@ public class JdbcLogic {
 	}
 
 	public void truncate() {
-		try (var conn = this.ds.getConnection();
-				var pstmt = conn.prepareStatement("truncate table benchmark_test cascade");) {
+		try (var conn = DriverManager.getConnection(this.url, "rtfa", "rtfa");
+				final var pstmt = conn.prepareStatement("truncate table benchmark_test cascade");) {
+			conn.setAutoCommit(false);
 			pstmt.execute();
 		} catch (final SQLException e) {
 			this.log.error("error while truncating test table", e);
@@ -74,13 +65,12 @@ public class JdbcLogic {
 		if (this.executors.isTerminated() == false) {
 			this.executors.shutdownNow();
 		}
-		this.ds.close();
 	}
 
 	public void joinAll() {
 		this.executors.shutdown();
 		try {
-			this.executors.awaitTermination(10, TimeUnit.SECONDS);
+			this.executors.awaitTermination(120, TimeUnit.SECONDS);
 		} catch (final InterruptedException e) {
 			this.log.error("error while awaiting termination of worker threads");
 		}

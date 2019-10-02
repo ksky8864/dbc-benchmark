@@ -23,7 +23,7 @@ public class JdbcBenchmarkTest {
 
 	@State(Scope.Benchmark)
 	public static class Parameters {
-		@Param({ "50" })
+		@Param({ "10000" })
 		String count;
 	}
 
